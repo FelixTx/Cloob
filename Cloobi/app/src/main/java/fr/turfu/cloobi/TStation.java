@@ -11,4 +11,8 @@ public class TStation extends Station{
         super(p);
 
     }
+    public String toString(){
+        String res="tostring de station de tram";
+        return res;
+    }
 }

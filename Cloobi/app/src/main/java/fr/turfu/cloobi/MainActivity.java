@@ -2,13 +2,13 @@ package fr.turfu.cloobi;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import org.osmdroid.util.ResourceProxyImpl;
 import org.osmdroid.DefaultResourceProxyImpl;
 import org.osmdroid.ResourceProxy;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.ItemizedIconOverlay;
+import org.osmdroid.views.overlay.  ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
 import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
@@ -45,6 +45,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         myOpenMapView = (MapView) findViewById(R.id.openmapview);
+        //Activer le zoom et le tactile
         myOpenMapView.setBuiltInZoomControls(true);
         myOpenMapView.setMultiTouchControls(true);
 
@@ -54,23 +55,36 @@ public class MainActivity extends Activity {
 
         //--- Create Overlay
         overlayItemArray = new ArrayList<OverlayItem>();
-
+// Il serait pratique d'utiliser un custom resource proxy, mais c'est galere
         DefaultResourceProxyImpl defaultResourceProxyImpl
                 = new DefaultResourceProxyImpl(this);
+        // AJOUTER LE POINT BLEU !
         MyItemizedIconOverlay myItemizedIconOverlay
                 = new MyItemizedIconOverlay(
                 overlayItemArray, null, defaultResourceProxyImpl);
         myOpenMapView.getOverlays().add(myItemizedIconOverlay);
         //---
 
-        // TEST for extra icons ====================================================================
-        //your items
+        // AJOUTER TOUTES LES ICONES de la TAN  ====================================================
+        // Liste des icones
         ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
-        items.add(new OverlayItem("prems", "Une autre", new GeoPoint(47.215818, -1.580022))); // Lat/Lon decimal degrees
-        GeoPoint g=new GeoPoint(47.214335, -1.555588);
-        Station s=new Station((GeoPoint)g);
-        items.add(new OverlayItem("Tramway", "Commerce", s.pos));
-//the overlay
+        // on crée chaque element i
+        OverlayItem i1 =new OverlayItem("Tramway", "Nike la Tan", new GeoPoint(47.22, -1.55));
+        // On crée un item i2 a partir d'un element de la classe Station
+        GeoPoint g=new GeoPoint(47.215, -1.55);
+        Station s=new TStation((GeoPoint)g);
+        // on génere i2 à partir de s
+        OverlayItem i2 =new OverlayItem(s.nom, s.toString(), s.pos);
+        // On crée un objet d'image "drawable", pour lui associer le fichier png "R.drawable.tan"
+        Drawable icon_t = this.getResources().getDrawable(R.drawable.tan);
+        // on l'associe aux Items Bicloos
+        i1.setMarker(icon_t);
+        i2.setMarker(icon_t);
+        // On ajoute les items a la liste
+        items.add(i1);
+        items.add(i2);
+//On inclut la liste des icones dans un overlay
+// (we can change default color in itemizedoverlaywithfocus.java)
         ItemizedOverlayWithFocus<OverlayItem> mOverlay = new ItemizedOverlayWithFocus<OverlayItem>(items,
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     @Override
@@ -83,9 +97,44 @@ public class MainActivity extends Activity {
                         return false;
                     }
                 }, defaultResourceProxyImpl);
+        // Affichage du texte au click sur icone. Le texte disparait
+        // lorsqu'on click sur une autre icone du meme overlay (meme couleur ici)
         mOverlay.setFocusItemsOnTap(true);
-
+// On ajoute l'overlay a la mapview
         myOpenMapView.getOverlays().add(mOverlay);
+
+
+        // TEST BICLOO ===================================== =============================
+
+        //IDEM AS TAN
+        ArrayList<OverlayItem> items2 = new ArrayList<OverlayItem>();
+        GeoPoint g2=new GeoPoint(47.21, -1.555);
+        Station s2=new BStation((GeoPoint)g2);
+        OverlayItem it1 =new OverlayItem(s2.nom, s2.toString(), s2.pos);
+        OverlayItem it2 =new OverlayItem("5", "Station bicloo", "7 / 100", new GeoPoint(47.215, -1.56));
+        Drawable icon_b = this.getResources().getDrawable(R.drawable.bic);
+        it1.setMarker(icon_b);
+        it2.setMarker(icon_b);
+        items2.add(it1); // Lat/Lon decimal degrees
+        items2.add(it2);
+//the overlay (we can change default color in itemizedoverlaywithfocus.java)
+        ItemizedOverlayWithFocus<OverlayItem> mOverlay2 = new ItemizedOverlayWithFocus<OverlayItem>(items2,
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        //do something
+                        return true;
+                    }
+                    @Override
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        return false;
+                    }
+                }, defaultResourceProxyImpl);
+        mOverlay2.setFocusItemsOnTap(true);
+
+        myOpenMapView.getOverlays().add(mOverlay2);
+
+
 
         //======================================================================== END test
 
@@ -229,26 +278,14 @@ public class MainActivity extends Activity {
                 mapview.getProjection().toPixels(in, out);
 
                 Bitmap bm = BitmapFactory.decodeResource(getResources(),
-                        R.drawable.ic_menu_mylocation);
+                        R.drawable.mylocation);
                 canvas.drawBitmap(bm,
                         out.x - bm.getWidth()/2,  //shift the bitmap center
                         out.y - bm.getHeight()/2,  //shift the bitmap center
                         null);
             }
         }
-        //TODO ===========================================================================================
-        /*
-        //Create new marker
-Drawable icon = Context.getResources().getDrawable(R.drawable.bicon);
 
-//Set the bounding for the drawable
-icon.setBounds(
-    0 - icon.getIntrinsicWidth() / 2, 0 - icon.getIntrinsicHeight(),
-    icon.getIntrinsicWidth() / 2, 0);
-
-//Set the new marker to the overlay
-overlayItem.setMarker(icon);
-*/
         @Override
         public boolean onSingleTapUp(MotionEvent event, MapView mapView) {
             // TODO Auto-generated method stub
